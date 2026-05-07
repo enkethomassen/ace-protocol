@@ -13,7 +13,7 @@ import { validatePayment, simulatePaymentExecution } from '@/lib/paymentAdapter'
 import { routeExecution, estimateCurrentFee } from '@/lib/executionRouter';
 import { appendLog } from '@/lib/activityLog';
 
-const statusConfig: Record<string, { label: string; icon: React.ElementType; variant: 'success' | 'gold' | 'ocean' | 'danger' | 'muted' }> = {
+const statusConfig: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; variant: 'success' | 'gold' | 'ocean' | 'danger' | 'muted' }> = {
   scheduled:  { label: 'Scheduled',  icon: Clock,         variant: 'ocean' },
   executing:  { label: 'Executing',  icon: Loader2,       variant: 'gold' },
   completed:  { label: 'Completed',  icon: CheckCircle2,  variant: 'success' },
@@ -83,6 +83,7 @@ export default function PaymentsPage() {
     }
 
     const { feeLamports } = estimateCurrentFee();
+    // eslint-disable-next-line react-hooks/purity -- event handler, not render
     const urgencyHours = Math.max(0, (payment.nextDue - Math.floor(Date.now() / 1000)) / 3600);
     const route = routeExecution({
       amountUsd: payment.amountUsd,

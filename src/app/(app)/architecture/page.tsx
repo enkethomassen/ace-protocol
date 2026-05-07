@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 function Section({ title, icon: Icon, children, defaultOpen = false }: {
   title: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
   defaultOpen?: boolean;
 }) {

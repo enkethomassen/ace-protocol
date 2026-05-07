@@ -85,12 +85,36 @@ function deterministicFallback(state: InsightRequest): InsightResponse {
   };
 }
 
+function validateBody(body: unknown): body is InsightRequest {
+  if (typeof body !== 'object' || body === null) return false;
+  const b = body as Record<string, unknown>;
+  const validCoverage = ['healthy', 'warning', 'critical'];
+  const validUrgency = ['low', 'medium', 'high'];
+  return (
+    validCoverage.includes(b.reserveCoverage as string) &&
+    validUrgency.includes(b.executionUrgency as string) &&
+    typeof b.upcomingPayments === 'number' &&
+    typeof b.totalUpcomingUsd === 'number' &&
+    typeof b.estimatedFee === 'number' &&
+    typeof b.reserveRatio === 'number' &&
+    typeof b.freeBalance === 'number' &&
+    typeof b.investableBalance === 'number'
+  );
+}
+
 export async function POST(req: NextRequest) {
   let body: InsightRequest;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  if (!validateBody(body)) {
+    return NextResponse.json(
+      { error: 'Missing or invalid required fields. Expected: reserveCoverage, executionUrgency, upcomingPayments, totalUpcomingUsd, estimatedFee, reserveRatio, freeBalance, investableBalance' },
+      { status: 400 }
+    );
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY ?? process.env.OPENAI_API_KEY;

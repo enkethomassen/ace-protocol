@@ -112,7 +112,8 @@ export function useVaultState(): VaultState {
   }, [connected, publicKey, connection, payments]);
 
   useEffect(() => {
-    load();
+    const timer = setTimeout(() => load(), 0);
+    return () => clearTimeout(timer);
   }, [load]);
 
   return { vault, payments, summary, isLive, refresh: load };

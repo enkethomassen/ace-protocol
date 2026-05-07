@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const typeConfig: Record<LogEntry['type'], { icon: React.ElementType; color: string; label: string }> = {
+const typeConfig: Record<LogEntry['type'], { icon: React.ComponentType<{ className?: string }>; color: string; label: string }> = {
   deposit:            { icon: ArrowDownLeft, color: 'text-emerald-400 bg-emerald-500/10', label: 'Deposit' },
   withdraw:           { icon: ArrowUpRight,  color: 'text-orange-400 bg-orange-500/10',  label: 'Withdraw' },
   payment:            { icon: Zap,           color: 'text-yellow-400 bg-yellow-500/10',  label: 'Payment' },
@@ -39,12 +39,11 @@ function formatTs(ts: number): string {
 
 export default function ActivityPage() {
   const { vault, payments } = useApp();
-  const [entries, setEntries] = useState<LogEntry[]>([]);
+  const [entries, setEntries] = useState<LogEntry[]>(getLog);
   const [insight, setInsight] = useState<InsightResponse | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
 
   useEffect(() => {
-    setEntries(getLog());
     const unsub = subscribeLog(() => setEntries(getLog()));
     return unsub;
   }, []);
@@ -88,7 +87,9 @@ export default function ActivityPage() {
 
   // Auto-fetch on first load
   useEffect(() => {
-    if (vault) fetchInsight();
+    if (!vault) return;
+    const timer = setTimeout(() => fetchInsight(), 0);
+    return () => clearTimeout(timer);
   }, [vault]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const counts = entries.reduce<Record<string, number>>((acc, e) => {
@@ -110,9 +111,11 @@ export default function ActivityPage() {
           <div className="flex flex-wrap gap-2 mt-3">
             {Object.entries(counts).map(([type, count]) => {
               const cfg = typeConfig[type as LogEntry['type']];
+              if (!cfg) return null;
+              const Icon = cfg.icon;
               return (
                 <span key={type} className={cn('flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium', cfg.color)}>
-                  <cfg.icon className="w-2.5 h-2.5" />
+                  <Icon className="w-2.5 h-2.5" />
                   {cfg.label}: {count}
                 </span>
               );

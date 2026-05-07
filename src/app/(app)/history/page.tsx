@@ -9,7 +9,7 @@ import { ArrowDownLeft, ArrowUpRight, RefreshCw, DollarSign, Sprout, Coins, Exte
 import { cn } from '@/lib/utils';
 import type { TransactionRecord } from '@/types';
 
-const typeConfig: Record<string, { icon: React.ElementType; label: string; color: string; amtColor: string }> = {
+const typeConfig: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; color: string; amtColor: string }> = {
   deposit:       { icon: ArrowDownLeft, label: 'Deposit',       color: 'text-emerald-400 bg-emerald-500/10', amtColor: 'text-emerald-400' },
   withdraw:      { icon: ArrowUpRight,  label: 'Withdraw',      color: 'text-orange-400 bg-orange-500/10',   amtColor: 'text-orange-400' },
   rebalance:     { icon: RefreshCw,     label: 'Rebalance',     color: 'text-sky-400 bg-sky-500/10',         amtColor: 'text-white' },

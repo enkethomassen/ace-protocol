@@ -7,7 +7,7 @@ import type { TransactionRecord } from '@/types';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-const typeConfig: Record<string, { icon: React.ElementType; label: string; color: string }> = {
+const typeConfig: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; color: string }> = {
   deposit:       { icon: ArrowDownLeft, label: 'Deposit',       color: 'text-emerald-400' },
   withdraw:      { icon: ArrowUpRight,  label: 'Withdraw',      color: 'text-orange-400' },
   rebalance:     { icon: RefreshCw,     label: 'Rebalance',     color: 'text-sky-400' },
