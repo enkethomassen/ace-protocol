@@ -20,6 +20,7 @@ import {
   MOCK_SUMMARY,
 } from '@/lib/solana/mockData';
 import { appendLog } from '@/lib/activityLog';
+import { useProtocolStore } from '@/lib/store/useProtocolStore';
 
 let _solPriceUsd = 148; // updated on wallet connect via /api/sol-price
 
@@ -89,6 +90,10 @@ const AppContext = createContext<AppState & AppActions>({
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
+  const isSimulationMode = useProtocolStore((state) => state.isSimulationMode);
+  const isOnboarded = useProtocolStore((state) => state.isOnboarded);
+  const setSimulationModeStore = useProtocolStore((state) => state.setSimulationMode);
+  const setOnboarded = useProtocolStore((state) => state.setOnboarded);
   const [state, setState] = useState<AppState>(defaultState);
 
   const loadData = useCallback(async () => {
@@ -172,9 +177,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           summary: liveSummary,
           walletAddress: publicKey.toBase58(),
           isWalletConnected: true,
-          isSimulationMode: false,
+          isSimulationMode,
           isLoading: false,
-          isOnboarded: typeof window !== 'undefined' && localStorage.getItem('ace_onboarded') === 'true',
+          isOnboarded,
         }));
         return;
       } catch (err) {
@@ -191,22 +196,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       summary: MOCK_SUMMARY,
       walletAddress: null,
       isWalletConnected: false,
-      isSimulationMode: true,
+      isSimulationMode,
       isLoading: false,
-      isOnboarded: typeof window !== 'undefined' && localStorage.getItem('ace_onboarded') === 'true',
+      isOnboarded,
     }));
-  }, [connected, publicKey, connection]);
+  }, [connected, publicKey, connection, isOnboarded, isSimulationMode]);
 
   useEffect(() => {
-    loadData();
+    void Promise.resolve().then(loadData);
   }, [loadData]);
 
+  useEffect(() => {
+    if (connected) setSimulationModeStore(false);
+  }, [connected, setSimulationModeStore]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setOnboarded(localStorage.getItem('ace_onboarded') === 'true');
+  }, [setOnboarded]);
+
   const setSimulationMode = (v: boolean) =>
-    setState(prev => ({ ...prev, isSimulationMode: v }));
+    setSimulationModeStore(v);
 
   const completeOnboarding = () => {
     if (typeof window !== 'undefined') localStorage.setItem('ace_onboarded', 'true');
-    setState(prev => ({ ...prev, isOnboarded: true }));
+    setOnboarded(true);
   };
 
   const refreshVault = () => loadData();
