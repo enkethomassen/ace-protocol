@@ -1,9 +1,13 @@
 'use client';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import {
-  Anchor, Zap, Shield, TrendingUp, ArrowRight,
-  Coins, Clock, BarChart3, Cpu, ChevronRight,
+  Anchor, ArrowRight, BrainCircuit, Clock3, Layers3,
+  ShieldCheck, Sparkles, TimerReset, Wallet, Workflow, ChevronRight,
 } from 'lucide-react';
 
 const fade = (delay = 0) => ({
@@ -12,252 +16,337 @@ const fade = (delay = 0) => ({
   transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] as [number, number, number, number], delay },
 });
 
-const features = [
+const protocolBuckets = [
   {
-    icon: TrendingUp,
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-400/10',
-    title: 'Automated Yield',
-    desc: 'Idle capital is automatically routed into yield-bearing strategies while maintaining your liquidity buffer.',
+    icon: Layers3,
+    title: 'Reserve Bucket',
+    desc: 'Capital held close to execution so scheduled obligations have priority coverage before any optional deployment.',
   },
   {
-    icon: Clock,
-    color: 'text-sky-400',
-    bg: 'bg-sky-400/10',
-    title: 'Scheduled Payments',
-    desc: 'Set recurring payments and bill automation. ACE reserves funds and executes on time — no manual steps.',
+    icon: Sparkles,
+    title: 'Investable Bucket',
+    desc: 'Excess balance is identified deterministically and can be routed into approved strategies without eroding reserve safety.',
   },
   {
-    icon: Zap,
-    color: 'text-amber-400',
-    bg: 'bg-amber-400/10',
-    title: 'Execution Intelligence',
-    desc: 'MEV-aware routing picks the optimal moment to execute swaps and rebalances, minimising slippage and fees.',
+    icon: Wallet,
+    title: 'Free Balance',
+    desc: 'Immediate liquidity remains available for user-directed actions instead of being buried inside hidden system flows.',
   },
   {
-    icon: Cpu,
-    color: 'text-orange-400',
-    bg: 'bg-orange-400/10',
-    title: 'AI Cashflow Engine',
-    desc: 'The on-board policy engine predicts spending pressure and recommends allocation changes before you need them.',
-  },
-  {
-    icon: Shield,
-    color: 'text-rose-400',
-    bg: 'bg-rose-400/10',
-    title: 'Non-Custodial Vaults',
-    desc: 'PDA-owned vault accounts on Solana. Your keys, your capital. ACE never holds funds outside protocol-defined rules.',
-  },
-  {
-    icon: Coins,
-    color: 'text-violet-400',
-    bg: 'bg-violet-400/10',
-    title: 'Real-World Off-Ramps',
-    desc: 'Integrated payment rails let you settle obligations directly to bank accounts from your on-chain vault.',
+    icon: TimerReset,
+    title: 'Execution Timing',
+    desc: 'ACE sequences rebalances and payment flows around urgency, fee conditions, and reserve integrity rather than fixed timers.',
   },
 ];
 
-const stats = [
-  { label: 'Target APY', value: '8–14%' },
-  { label: 'Avg. Execution Save', value: '~0.4%' },
-  { label: 'Reserve Buffer', value: '30 days' },
-  { label: 'Network', value: 'Solana' },
+const enginePillars = [
+  {
+    icon: Workflow,
+    eyebrow: 'Execution Engine',
+    title: 'Deterministic routing for recurring value movement',
+    description:
+      'ACE scores payment urgency, reserve pressure, and execution conditions before surfacing the next allowed protocol action.',
+  },
+  {
+    icon: BrainCircuit,
+    eyebrow: 'Explainable Intelligence',
+    title: 'AI interprets protocol state instead of controlling funds',
+    description:
+      'Reasoning outputs summarize reserve posture, timing tradeoffs, and failure causes with user-facing explanations bounded by protocol facts.',
+  },
+  {
+    icon: ShieldCheck,
+    eyebrow: 'Self-Custody',
+    title: 'Wallet-led access with reserve-aware safeguards',
+    description:
+      'The dashboard remains private to connected wallets, while execution stays transparent, auditable, and policy constrained.',
+  },
 ];
+
+function LaunchButton({ className, variant = 'primary' }: { className?: string; variant?: 'primary' | 'secondary' }) {
+  const router = useRouter();
+  const { connected } = useWallet();
+  const { setVisible } = useWalletModal();
+
+  useEffect(() => {
+    if (connected) router.push('/dashboard');
+  }, [connected, router]);
+
+  const base =
+    variant === 'primary'
+      ? 'violet-glow bg-[linear-gradient(135deg,#8b5cf6_0%,#d946ef_55%,#fb7185_100%)] text-white'
+      : 'border border-white/10 bg-white/5 text-[#f5f1ff] hover:bg-white/8';
+
+  return (
+    <button
+      onClick={() => (connected ? router.push('/dashboard') : setVisible(true))}
+      className={`${base} ${className ?? ''}`}
+    >
+      {connected ? 'Enter Dashboard' : 'Connect Wallet'}
+    </button>
+  );
+}
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen orb-bg grid-bg font-sans text-[#f0ede6] overflow-x-hidden">
+    <div className="protocol-bg min-h-screen overflow-x-hidden font-sans text-[#f5f1ff]">
 
-      {/* ── Nav ── */}
-      <nav className="sticky top-0 z-50 border-b border-[#1c1d2e] bg-[#070810]/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
+      <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#07060d]/72 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5">
+          <div className="flex items-center gap-3">
+            <div className="violet-glow flex h-9 w-9 items-center justify-center rounded-2xl border border-fuchsia-400/20 bg-[linear-gradient(135deg,rgba(183,120,255,0.3),rgba(255,118,210,0.18))]">
               <Anchor className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-bold text-sm tracking-tight">ACE Protocol</span>
+            <div>
+              <p className="text-sm font-semibold tracking-[-0.02em] text-white">ACE Protocol</p>
+              <p className="text-[10px] uppercase tracking-[0.26em] text-[#8c85aa]">Adaptive Cashflow Engine</p>
+            </div>
           </div>
-          <div className="hidden sm:flex items-center gap-6 text-xs text-[#54566e]">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#how" className="hover:text-white transition-colors">How it works</a>
-            <a href="#stats" className="hover:text-white transition-colors">Stats</a>
+          <div className="hidden items-center gap-7 text-xs text-[#9a93b3] md:flex">
+            <a href="#protocol" className="transition-colors hover:text-white">Protocol</a>
+            <a href="#engine" className="transition-colors hover:text-white">Execution</a>
+            <a href="#ai" className="transition-colors hover:text-white">AI reasoning</a>
+            <a href="#trust" className="transition-colors hover:text-white">Trust</a>
           </div>
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-400 text-white hover:opacity-90 transition-opacity"
-          >
-            Launch App <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <LaunchButton className="rounded-full px-5 py-2.5 text-xs font-semibold transition-opacity hover:opacity-95" />
         </div>
       </nav>
 
-      {/* ── Hero ── */}
-      <section className="max-w-6xl mx-auto px-5 pt-24 pb-20 text-center">
-        <motion.div {...fade(0)}>
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border border-orange-500/30 text-orange-400 bg-orange-500/5 mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse-fire" />
-            Built on Solana · Devnet live
-          </span>
-        </motion.div>
+      <section className="mx-auto grid max-w-7xl gap-14 px-5 pb-24 pt-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)] lg:items-center">
+        <div>
+          <motion.div {...fade(0)}>
+            <span className="inline-flex items-center gap-2 rounded-full border border-fuchsia-400/18 bg-fuchsia-400/6 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.24em] text-fuchsia-200/78">
+              <span className="h-2 w-2 rounded-full bg-fuchsia-300 shadow-[0_0_16px_rgba(217,70,239,0.8)]" />
+              Solana devnet protocol surface
+            </span>
+          </motion.div>
 
-        <motion.h1 {...fade(0.06)} className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
-          Turn idle capital into{' '}
-          <span className="gradient-fire">automated cashflow</span>
-        </motion.h1>
-
-        <motion.p {...fade(0.12)} className="text-[#54566e] text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed mb-10">
-          ACE Protocol is a Solana-native financial automation engine. Deposit once, set your goals,
-          and let ACE handle yield, reserves, and recurring payments — automatically.
-        </motion.p>
-
-        <motion.div {...fade(0.18)} className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 text-white font-semibold text-sm hover:opacity-90 transition-opacity fire-glow"
+          <motion.h1
+            {...fade(0.06)}
+            className="mt-7 max-w-4xl text-5xl font-semibold leading-[0.98] tracking-[-0.05em] text-white sm:text-6xl lg:text-7xl"
           >
-            Launch Dashboard <ArrowRight className="w-4 h-4" />
-          </Link>
-          <a
-            href="#features"
-            className="flex items-center gap-2 px-7 py-3.5 rounded-xl border border-[#1c1d2e] text-[#54566e] hover:text-white hover:border-[#2a2b45] font-medium text-sm transition-colors"
-          >
-            See features <ChevronRight className="w-4 h-4" />
-          </a>
-        </motion.div>
+            Automated cashflow,
+            <span className="gradient-protocol block pb-2 pt-3">timed for execution reality.</span>
+          </motion.h1>
 
-        {/* Hero visual */}
-        <motion.div {...fade(0.26)} className="mt-16 relative mx-auto max-w-3xl">
-          <div className="rounded-2xl border border-[#1c1d2e] bg-[#0e0f1a] p-6 text-left shadow-2xl">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <p className="text-xs text-[#54566e] mb-1">Total under management</p>
-                <p className="text-3xl font-bold text-white">$12,480.<span className="text-[#54566e]">00</span></p>
+          <motion.p
+            {...fade(0.12)}
+            className="mt-7 max-w-2xl text-lg leading-8 text-[#b3acc8] sm:text-xl"
+          >
+            ACE is an execution-aware cashflow engine for Solana. It separates reserve liquidity, investable capital, and payment obligations so recurring finance can stay reliable under real network conditions.
+          </motion.p>
+
+          <motion.div {...fade(0.18)} className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <LaunchButton className="inline-flex items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold" />
+            <a
+              href="#protocol"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/4 px-6 py-3.5 text-sm font-medium text-[#ece8ff] transition-colors hover:bg-white/7"
+            >
+              Explore protocol flow <ChevronRight className="h-4 w-4" />
+            </a>
+          </motion.div>
+
+          <motion.div
+            {...fade(0.24)}
+            className="mt-10 grid gap-3 text-sm text-[#c9c4da] sm:grid-cols-3"
+          >
+            {[
+              'Recurring payment coordination',
+              'Reserve-aware liquidity policy',
+              'Explainable execution reasoning',
+            ].map((item) => (
+              <div key={item} className="glass-panel rounded-2xl border border-white/8 px-4 py-4">
+                {item}
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full">
-                <TrendingUp className="w-3.5 h-3.5" /> +8.4% APY
-              </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { label: 'Earning Yield', val: '$7,470', color: 'bg-emerald-400' },
-                { label: 'Reserve', val: '$2,994', color: 'bg-amber-400' },
-                { label: 'Spendable', val: '$1,248', color: 'bg-orange-400' },
-                { label: 'Payments', val: '$768', color: 'bg-sky-400' },
-              ].map(({ label, val, color }) => (
-                <div key={label} className="rounded-lg border border-[#2a2a3a] bg-[#070810] p-3">
-                  <div className={`w-2 h-2 rounded-full ${color} mb-2`} />
-                  <p className="text-white font-semibold text-sm">{val}</p>
-                  <p className="text-[#54566e] text-xs mt-0.5">{label}</p>
+            ))}
+          </motion.div>
+        </div>
+
+        <motion.div {...fade(0.14)} className="relative">
+          <div className="pointer-events-none absolute -left-14 top-14 h-40 w-40 rounded-full bg-fuchsia-500/18 blur-3xl" />
+          <div className="pointer-events-none absolute -right-10 bottom-8 h-36 w-36 rounded-full bg-cyan-400/12 blur-3xl" />
+          <div className="glass-panel relative overflow-hidden rounded-[32px] border border-white/10 p-5 shadow-[0_35px_120px_rgba(4,2,12,0.65)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(192,132,252,0.16),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.08),transparent_32%)]" />
+            <div className="relative">
+              <div className="flex items-center justify-between border-b border-white/8 pb-4">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-[#8f89ad]">Execution map</p>
+                  <h2 className="mt-2 text-xl font-semibold text-white">Reserve-aware flow control</h2>
                 </div>
-              ))}
-            </div>
-            <div className="mt-4 h-1.5 rounded-full bg-[#1c1d2e] overflow-hidden flex gap-0.5">
-              <div className="h-full bg-emerald-400 rounded-full" style={{ width: '60%' }} />
-              <div className="h-full bg-amber-400 rounded-full" style={{ width: '24%' }} />
-              <div className="h-full bg-orange-400 rounded-full" style={{ width: '10%' }} />
-              <div className="h-full bg-sky-400 rounded-full" style={{ width: '6%' }} />
+                <span className="rounded-full border border-fuchsia-400/18 bg-fuchsia-400/8 px-3 py-1 text-[11px] font-medium text-fuchsia-200/85">
+                  Public overview only
+                </span>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {[
+                  { title: 'Incoming capital', body: 'Deposits enter a deterministic allocation policy instead of a generic wallet dashboard.' },
+                  { title: 'Reserve checkpoint', body: 'Upcoming obligations and timing windows determine what must remain execution-ready.' },
+                  { title: 'Investable surplus', body: 'Only excess liquidity becomes eligible for strategy routing under protocol constraints.' },
+                  { title: 'Scheduled settlement', body: 'Payment execution is queued around urgency, fees, and reliability requirements.' },
+                ].map(({ title, body }, index) => (
+                  <div key={title} className="rounded-2xl border border-white/8 bg-black/18 p-4">
+                    <div className="mb-2 flex items-center gap-3">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/6 text-xs font-semibold text-fuchsia-100">
+                        0{index + 1}
+                      </span>
+                      <p className="text-sm font-semibold text-white">{title}</p>
+                    </div>
+                    <p className="text-sm leading-6 text-[#b8b0d1]">{body}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          {/* glow underneath */}
-          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-3/4 h-16 bg-orange-500/10 blur-2xl rounded-full pointer-events-none" />
         </motion.div>
       </section>
 
-      {/* ── Stats bar ── */}
-      <section id="stats" className="border-y border-[#1c1d2e] bg-[#0e0f1a]">
-        <div className="max-w-6xl mx-auto px-5 py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-          {stats.map(({ label, value }, i) => (
-            <motion.div key={label} {...fade(i * 0.06)}>
-              <p className="text-2xl font-bold gradient-fire">{value}</p>
-              <p className="text-xs text-[#54566e] mt-1">{label}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── How it works ── */}
-      <section id="how" className="max-w-6xl mx-auto px-5 py-24">
-        <motion.div {...fade(0)} className="text-center mb-14">
-          <p className="text-xs text-orange-400 font-semibold uppercase tracking-widest mb-3">How it works</p>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Three steps to automated cashflow</h2>
-        </motion.div>
-        <div className="grid sm:grid-cols-3 gap-6">
-          {[
-            { n: '01', title: 'Connect & Deposit', desc: 'Connect your Solana wallet and deposit USDC into your non-custodial ACE vault. You stay in control at all times.' },
-            { n: '02', title: 'Set Your Goals', desc: 'Define your reserve target, upcoming payments, and yield preferences. The policy engine handles the rest.' },
-            { n: '03', title: 'ACE Executes', desc: 'Capital is allocated, yield is harvested, reserves are maintained, and payments go out — all automatically and on-chain.' },
-          ].map(({ n, title, desc }, i) => (
-            <motion.div key={n} {...fade(i * 0.08)} className="card-hover rounded-2xl border border-[#1c1d2e] bg-[#0e0f1a] p-6">
-              <p className="text-4xl font-bold gradient-fire mb-4">{n}</p>
-              <h3 className="font-semibold text-white mb-2">{title}</h3>
-              <p className="text-[#54566e] text-sm leading-relaxed">{desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Features ── */}
-      <section id="features" className="max-w-6xl mx-auto px-5 pb-24">
-        <motion.div {...fade(0)} className="text-center mb-14">
-          <p className="text-xs text-orange-400 font-semibold uppercase tracking-widest mb-3">Features</p>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Everything your cashflow needs</h2>
-          <p className="text-[#54566e] mt-3 text-sm max-w-xl mx-auto">
-            ACE combines DeFi yield, payment rails, and execution intelligence into one cohesive layer.
+      <section id="protocol" className="mx-auto max-w-7xl px-5 pb-24">
+        <motion.div {...fade(0)} className="mb-10 max-w-2xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-fuchsia-200/70">Protocol explanation</p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">
+            Four system buckets, each with a clear job.
+          </h2>
+          <p className="mt-4 text-base leading-7 text-[#b3acc8]">
+            ACE avoids fuzzy “all balance in one pool” behavior. Every dollar-equivalent position is classified according to execution responsibility.
           </p>
         </motion.div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map(({ icon: Icon, color, bg, title, desc }, i) => (
-            <motion.div key={title} {...fade(i * 0.06)} className="card-hover rounded-2xl border border-[#1c1d2e] bg-[#0e0f1a] p-5">
-              <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center mb-4`}>
-                <Icon className={`w-4.5 h-4.5 ${color}`} />
+
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {protocolBuckets.map(({ icon: Icon, title, desc }, i) => (
+            <motion.div key={title} {...fade(i * 0.06)} className="glass-panel card-hover rounded-[28px] border border-white/8 p-6">
+              <div className="violet-glow mb-6 flex h-12 w-12 items-center justify-center rounded-2xl border border-fuchsia-400/18 bg-[linear-gradient(135deg,rgba(139,92,246,0.24),rgba(217,70,239,0.14))]">
+                <Icon className="h-5 w-5 text-fuchsia-100" />
               </div>
-              <h3 className="font-semibold text-white text-sm mb-1.5">{title}</h3>
-              <p className="text-[#54566e] text-xs leading-relaxed">{desc}</p>
+              <h3 className="text-lg font-semibold tracking-[-0.03em] text-white">{title}</h3>
+              <p className="mt-3 text-sm leading-7 text-[#b3acc8]">{desc}</p>
             </motion.div>
           ))}
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section className="max-w-6xl mx-auto px-5 pb-24">
-        <motion.div {...fade(0)} className="rounded-2xl border border-orange-500/20 bg-gradient-to-br from-[#0e0f1a] to-[#130f0a] p-10 text-center relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 100%, rgba(255,107,43,0.08) 0%, transparent 70%)' }}
-          />
-          <div className="relative">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center mx-auto mb-5">
-              <Anchor className="w-6 h-6 text-white" />
+      <section id="engine" className="mx-auto max-w-7xl px-5 pb-24">
+        <div className="glass-panel rounded-[32px] border border-white/8 p-7 sm:p-10">
+          <motion.div {...fade(0)} className="grid gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-fuchsia-200/70">Execution engine</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">
+                Payment timing is a protocol concern, not a UI afterthought.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-[#b3acc8]">
+                Inspired by execution-first infrastructure thinking, ACE prioritizes timing windows, reserve coverage, and transaction reliability before capital is re-routed or a payment is sent.
+              </p>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
-              Ready to set sail?
+
+            <div className="grid gap-4">
+              {[
+                {
+                  title: 'Urgency scoring',
+                  body: 'Recurring obligations are ranked by due date proximity, reserve coverage, and available liquid balance.',
+                },
+                {
+                  title: 'Cost-aware batching',
+                  body: 'Rebalances and settlement flows can be delayed or combined when urgency is low and network conditions are expensive.',
+                },
+                {
+                  title: 'Priority execution',
+                  body: 'When payment risk rises, the engine favors reliability and timely settlement over optional optimization.',
+                },
+              ].map(({ title, body }, i) => (
+                <motion.div key={title} {...fade(i * 0.05)} className="rounded-[24px] border border-white/8 bg-black/16 p-5">
+                  <div className="flex items-center gap-3">
+                    <Clock3 className="h-4 w-4 text-fuchsia-200" />
+                    <h3 className="text-sm font-semibold text-white">{title}</h3>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-[#b3acc8]">{body}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <section id="ai" className="mx-auto max-w-7xl px-5 pb-24">
+        <motion.div {...fade(0)} className="mb-10 max-w-2xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-fuchsia-200/70">AI reasoning</p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">
+            Explainable reasoning, never autonomous fund control.
+          </h2>
+          <p className="mt-4 text-base leading-7 text-[#b3acc8]">
+            ACE uses deterministic protocol calculations first. AI is limited to summarizing state, clarifying reserve logic, and explaining execution decisions in human terms.
+          </p>
+        </motion.div>
+
+        <div className="grid gap-5 lg:grid-cols-3">
+          {enginePillars.map(({ icon: Icon, eyebrow, title, description }, i) => (
+            <motion.div key={title} {...fade(i * 0.05)} className="glass-panel rounded-[28px] border border-white/8 p-6">
+              <Icon className="h-5 w-5 text-fuchsia-200" />
+              <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f89ad]">{eyebrow}</p>
+              <h3 className="mt-3 text-xl font-semibold tracking-[-0.03em] text-white">{title}</h3>
+              <p className="mt-3 text-sm leading-7 text-[#b3acc8]">{description}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section id="trust" className="mx-auto max-w-7xl px-5 pb-24">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div className="glass-panel rounded-[30px] border border-white/8 p-7">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-fuchsia-200/70">Trust surface</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white">Built to feel infrastructural, not theatrical.</h2>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {[
+              'Wallet-based access keeps dashboard data private.',
+              'Reserve logic is deterministic and inspectable.',
+              'Execution decisions remain visible to the user.',
+              'AI never signs, holds, or moves funds.',
+            ].map((item, i) => (
+              <motion.div key={item} {...fade(i * 0.04)} className="glass-panel rounded-[24px] border border-white/8 p-5 text-sm leading-7 text-[#d7d2e7]">
+                {item}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 pb-24">
+        <motion.div {...fade(0)} className="glass-panel relative overflow-hidden rounded-[34px] border border-fuchsia-300/12 px-7 py-10 text-center sm:px-10">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_100%,rgba(217,70,239,0.16),transparent_40%)]" />
+          <div className="relative">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-fuchsia-200/70">Launch protocol</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl">
+              Connect your wallet to enter the private dashboard.
             </h2>
-            <p className="text-[#54566e] text-sm max-w-md mx-auto mb-8">
-              Connect your wallet and launch the ACE dashboard to start automating your Solana cashflow today.
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#b3acc8]">
+              The public site explains the system. The private dashboard is where reserve health, recurring payment flows, activity history, and reasoning logs become available to the wallet owner.
             </p>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 text-white font-semibold text-sm hover:opacity-90 transition-opacity fire-glow"
-            >
-              Launch Dashboard <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <LaunchButton className="inline-flex items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold" />
+              <Link
+                href="https://github.com/enkethomassen/ace-protocol"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/4 px-6 py-3.5 text-sm font-medium text-[#ece8ff] transition-colors hover:bg-white/7"
+              >
+                View repository <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </motion.div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="border-t border-[#1c1d2e] bg-[#070810]">
-        <div className="max-w-6xl mx-auto px-5 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
-              <Anchor className="w-3 h-3 text-white" />
+      <footer className="border-t border-white/6 bg-black/18">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-[#8f89ad] sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-2xl border border-fuchsia-400/20 bg-[linear-gradient(135deg,rgba(183,120,255,0.3),rgba(255,118,210,0.18))]">
+              <Anchor className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="text-xs font-semibold text-[#54566e]">ACE Protocol</span>
+            <div>
+              <p className="font-medium text-white">ACE Protocol</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#7d7699]">Adaptive Cashflow Engine</p>
+            </div>
           </div>
-          <p className="text-xs text-[#2a2b45]">Adaptive Cashflow Engine · Built on Solana · Devnet</p>
-          <div className="flex items-center gap-4 text-xs text-[#2a2b45]">
-            <Link href="/dashboard" className="hover:text-[#54566e] transition-colors">Dashboard</Link>
-            <Link href="/architecture" className="hover:text-[#54566e] transition-colors">Architecture</Link>
-          </div>
+          <p className="text-xs text-[#7d7699]">Execution-aware finance on Solana Devnet.</p>
         </div>
       </footer>
     </div>
